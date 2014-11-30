@@ -15,7 +15,7 @@ void trimMarkDown();
 /* Primitives */ 
 word					.+
 
-
+scstrong			"__"|"**"[^ ]
 strong				(_|"*"){2}[^ ]{word}[^ ]("*"|_){2}
 em						(_|"*"){1}[^ ]{word}[^ ]("*"|_){1}
 list					^"* "|"- "
@@ -24,8 +24,8 @@ h2						^#{2}[ ]{1}{word}
 h3						^#{3,6}[ ]{1}{word}
 code					`{word}`
 
-
 %x IN_MARKDOWN_LIST
+%x BOLD_TEXT ITALIC_TEXT
 
 %%
 				 /*----- Sección de Reglas ----------------*/ 
@@ -54,15 +54,25 @@ code					`{word}`
 {h3}		{
 					fprintf(yyout, "\\subsubsection{%s}", trimCharacter(yytext, "#"));
 				}
-
-{strong}		{	
-							trimMarkDown(2);
-							fprintf(yyout, "\\textbf{%s}", yytext);
-						}
-{em}				{
-							trimMarkDown(1);
-							fprintf(yyout, "\\textit{%s}", yytext);
-						}
+%{
+	int from_italic_text = 0; /* Para saber si venimos de una italic anidada en la bold*/
+%}
+{scstrong}		{	BEGIN(BOLD_TEXT); /* Comienzo de un strong __....*/} 
+<BOLD_TEXT>{
+			"__"	fprintf(yyout, "}"); // Eat the end
+			"_"	BEGIN(ITALIC_TEXT); 	// Hay otro elemento anidado, un italic, pasamos a procesarlo
+			[^_\n]*	{
+								if (from_italic_text) 
+									fprintf(yyout, "%s", yytext); // Texto a continuación del italic
+								else
+									fprintf(yyout, "\\textbf{%s", yytext);
+							}
+			\n	BEGIN(INITIAL);
+}
+<ITALIC_TEXT>{
+			[^_\n]* fprintf(yyout, "\\textit{%s", yytext);
+			"_"	fprintf(yyout, "}"); BEGIN(BOLD_TEXT); from_italic_text = 1; /* Llegado al último _, cerramos }, volvemos al stado BOLD_TEXT y ponemos from_italic_text a 1 para saber que estuvimos aquí, y no cerra antes de tiempo el \textbf*/
+}
 
 
 
