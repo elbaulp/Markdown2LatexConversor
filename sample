@@ -1,0 +1,48 @@
+Markuyp
+
+* elemento 1
+* elemento 2
+- I2
+- I4
+1. fdsafd
+2. fsdaf sad
+3. fdsa 
+
+__Que pasa en negrita!__
+
+_en cursiva_
+
+__combinado con _cursiva_ el texto__
+
+/*
+linea uno
+linead2
+*/
+hola que tal!
+gola que tal /* con commentario */
+
+# heading 1
+## heading 2
+### heading 3
+##### heading5
+###### heading 6
+#### heading 4
+
+__negrita__, **negrita**, *cursiva*,_cursiva_
+
+* Elemento 1
+* Elemento 2
+- Elemento 3
+- Elemento 4
+
+1. Elemento 1
+2. Elemento 2
+
+# Header 1
+## Header 2
+### Header 3 
+#### Header 4
+##### Header 5
+###### Header 6
+
+`codigo a resaltar`
