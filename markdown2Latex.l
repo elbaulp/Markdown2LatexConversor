@@ -10,12 +10,17 @@
 
 char *trimCharacter(char *str, char *c);
 void trimMarkDown();
+
+int from_italic_text = 0; /* Para saber si venimos de una italic anidada en la bold*/
+int from_bold_text = 0;
+
 %}
 
 /* Primitives */ 
 word					.+
 
-scstrong			"__"|"**"[^ ]
+scstrong			"__"|"**"
+scem					"_"|"*"
 strong				(_|"*"){2}[^ ]{word}[^ ]("*"|_){2}
 em						(_|"*"){1}[^ ]{word}[^ ]("*"|_){1}
 list					^"* "|"- "
@@ -25,7 +30,8 @@ h3						^#{3,6}[ ]{1}{word}
 code					`{word}`
 
 %x IN_MARKDOWN_LIST
-%x BOLD_TEXT ITALIC_TEXT
+%x BOLD_TEXT_NESTED_ITALIC ITALIC_TEXT 
+%x BOLD_TEXT ITALIC_TEXT_NESTED_BOLD
 
 %%
 				 /*----- Sección de Reglas ----------------*/ 
@@ -54,15 +60,13 @@ code					`{word}`
 {h3}		{
 					fprintf(yyout, "\\subsubsection{%s}", trimCharacter(yytext, "#"));
 				}
-%{
-	int from_italic_text = 0; /* Para saber si venimos de una italic anidada en la bold*/
-%}
-{scstrong}		{	BEGIN(BOLD_TEXT); /* Comienzo de un strong __....*/} 
-<BOLD_TEXT>{
+
+{scstrong}		{	BEGIN(BOLD_TEXT_NESTED_ITALIC); /* Comienzo de un strong __....*/} 
+<BOLD_TEXT_NESTED_ITALIC>{
 			"__"	fprintf(yyout, "}"); // Eat the end
 			"_"	BEGIN(ITALIC_TEXT); 	// Hay otro elemento anidado, un italic, pasamos a procesarlo
-			[^_\n]*	{
-								if (from_italic_text) 
+			[^_\n]*	{	
+								if (from_italic_text)
 									fprintf(yyout, "%s", yytext); // Texto a continuación del italic
 								else
 									fprintf(yyout, "\\textbf{%s", yytext);
@@ -71,12 +75,25 @@ code					`{word}`
 }
 <ITALIC_TEXT>{
 			[^_\n]* fprintf(yyout, "\\textit{%s", yytext);
-			"_"	fprintf(yyout, "}"); BEGIN(BOLD_TEXT); from_italic_text = 1; /* Llegado al último _, cerramos }, volvemos al stado BOLD_TEXT y ponemos from_italic_text a 1 para saber que estuvimos aquí, y no cerra antes de tiempo el \textbf*/
+			"_"	fprintf(yyout, "}"); BEGIN(BOLD_TEXT_NESTED_ITALIC); from_italic_text = 1; /* Llegado al último _, cerramos }, volvemos al stado BOLD_TEXT y ponemos from_italic_text a 1 para saber que estuvimos aquí, y no cerra antes de tiempo el \textbf*/
 }
 
-
-
-
+{scem}		{	BEGIN(ITALIC_TEXT_NESTED_BOLD); /* Comienzo de un strong __....*/} 
+<ITALIC_TEXT_NESTED_BOLD>{
+			"_"	fprintf(yyout, "}"); // Eat the end
+			"__"	BEGIN(BOLD_TEXT); 	// Hay otro elemento anidado, un italic, pasamos a procesarlo
+			[^_\n]*	{ 
+								if (from_bold_text) 
+									fprintf(yyout, "%s", yytext); // Texto a continuación del italic
+								else
+									fprintf(yyout, "\\textit{%s", yytext);
+							}
+			\n	BEGIN(INITIAL);
+}
+<BOLD_TEXT>{
+			[^_\n]* fprintf(yyout, "\\textbf{%s", yytext);
+			"__"	fprintf(yyout, "}"); BEGIN(ITALIC_TEXT_NESTED_BOLD); from_bold_text = 1; /* Llegado al último _, cerramos }, volvemos al stado BOLD_TEXT y ponemos from_italic_text a 1 para saber que estuvimos aquí, y no cerra antes de tiempo el \textbf*/
+}
 
 .|\n			{ECHO;}
 
