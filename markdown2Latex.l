@@ -30,7 +30,7 @@ h3						^#{3,6}[ ]{1}{word}
 code					`{word}`
 
 %x IN_MARKDOWN_LIST
-%x BOLD_TEXT_NESTED_ITALIC ITALIC_TEXT 
+%x BOLD_TEXT_NESTED_ITALIC ITALIC_TEXT
 %x BOLD_TEXT ITALIC_TEXT_NESTED_BOLD
 
 %%
@@ -38,9 +38,6 @@ code					`{word}`
 
 {list}	{BEGIN(IN_MARKDOWN_LIST);fprintf(yyout, "\\begin{itemize}\n");}
 
-%{
-	// Si detectamos una linea vacía, no metemos en IN_MARKDOWN_LIST con bEGIN, para comprobar si es un itemize en markdown 
-%}
 <IN_MARKDOWN_LIST>{
 	^\n						fprintf(yyout, "\\end{itemize}\n\n");BEGIN(INITIAL); /* si volvemos a detectar línea vacia, hemos acabado el itemize, o no era nada y salimos */
 	^"* "|"- "																						 /* Eliminar la sintáxis de itemize en markdown */
