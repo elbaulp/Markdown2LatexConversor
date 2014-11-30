@@ -19,15 +19,15 @@ int from_bold_text = 0;
 /* Primitives */ 
 word					.+
 
-scstrong			"__"|"**"
-scem					"_"|"*"
-strong				(_|"*"){2}[^ ]{word}[^ ]("*"|_){2}
-em						(_|"*"){1}[^ ]{word}[^ ]("*"|_){1}
-list					^"* "|"- "
-h1						^#{1}[ ]{1}{word}
-h2						^#{2}[ ]{1}{word}
-h3						^#{3,6}[ ]{1}{word}
-code					`{word}`
+scstrong	"__"|"**"
+scem	"_"|"*"
+strong	(_|"*"){2}[^ ]{word}[^ ]("*"|_){2}
+em	(_|"*"){1}[^ ]{word}[^ ]("*"|_){1}
+list	^"* "|"- "
+h1	^#{1}[ ]{1}{word}
+h2	^#{2}[ ]{1}{word}
+h3	^#{3,6}[ ]{1}{word}
+code	`{word}`
 
 %x IN_MARKDOWN_LIST
 %x BOLD_TEXT_NESTED_ITALIC ITALIC_TEXT
@@ -39,57 +39,57 @@ code					`{word}`
 {list}	{BEGIN(IN_MARKDOWN_LIST);fprintf(yyout, "\\begin{itemize}\n");}
 
 <IN_MARKDOWN_LIST>{
-	^\n						fprintf(yyout, "\\end{itemize}\n\n");BEGIN(INITIAL); /* si volvemos a detectar línea vacia, hemos acabado el itemize, o no era nada y salimos */
-	^"* "|"- "																						 /* Eliminar la sintáxis de itemize en markdown */
-	[^"*"\-\n]+			fprintf(yyout, "\t\\item{%s}\n", yytext); 			 /* Éste es el texto que compone cada línea del itemize */
-	\n						yylineno++;BEGIN(IN_MARKDOWN_LIST);							 /* Si detectamos salto de línea, aumentar el número de línea, y seguimos comprobando dentro de IN_MARKDOWN_LIST buscando más items*/
+	^\n	fprintf(yyout, "\\end{itemize}\n\n");BEGIN(INITIAL); /* si volvemos a detectar línea vacia, hemos acabado el itemize, o no era nada y salimos */
+	^"* "|"- "	/* Eliminar la sintáxis de itemize en markdown */
+	[^"*"\-\n]+	fprintf(yyout, "\t\\item{%s}\n", yytext);	/* Éste es el texto que compone cada línea del itemize */
+	\n	yylineno++;BEGIN(IN_MARKDOWN_LIST);	/* Si detectamos salto de línea, aumentar el número de línea, y seguimos comprobando dentro de IN_MARKDOWN_LIST buscando más items*/
 }
 
 {code}	{
-					fprintf(yyout, "\\begin{bashcode}\n%s\n\\end{bashcode}", trimCharacter(yytext, "`"));
-				}
-{h1}		{
-					fprintf(yyout, "\\section{%s}", trimCharacter(yytext, "#"));
-				}
-{h2}		{
-					fprintf(yyout, "\\subsection{%s}", trimCharacter(yytext, "#"));
-				}
-{h3}		{
-					fprintf(yyout, "\\subsubsection{%s}", trimCharacter(yytext, "#"));
-				}
+	fprintf(yyout, "\\begin{bashcode}\n%s\n\\end{bashcode}", trimCharacter(yytext, "`"));
+}
+{h1}	{
+	fprintf(yyout, "\\section{%s}", trimCharacter(yytext, "#"));
+}
+{h2}	{
+	fprintf(yyout, "\\subsection{%s}", trimCharacter(yytext, "#"));
+}
+{h3}	{
+	fprintf(yyout, "\\subsubsection{%s}", trimCharacter(yytext, "#"));
+}
 
-{scstrong}		{	BEGIN(BOLD_TEXT_NESTED_ITALIC); /* Comienzo de un strong __....*/} 
+{scstrong}	{	BEGIN(BOLD_TEXT_NESTED_ITALIC); /* Comienzo de un strong __....*/} 
 <BOLD_TEXT_NESTED_ITALIC>{
-			"__"	fprintf(yyout, "}"); // Eat the end
-			"_"	BEGIN(ITALIC_TEXT); 	// Hay otro elemento anidado, un italic, pasamos a procesarlo
-			[^_\n]*	{	
-								if (from_italic_text)
-									fprintf(yyout, "%s", yytext); // Texto a continuación del italic
-								else
-									fprintf(yyout, "\\textbf{%s", yytext);
-							}
-			\n	BEGIN(INITIAL);
+	"__"	fprintf(yyout, "}"); // Eat the end
+	"_"	BEGIN(ITALIC_TEXT); 	// Hay otro elemento anidado, un italic, pasamos a procesarlo
+	[^_\n]*	{	
+		if (from_italic_text)
+			fprintf(yyout, "%s", yytext); // Texto a continuación del italic
+		else
+			fprintf(yyout, "\\textbf{%s", yytext);
+	}
+	\n	BEGIN(INITIAL);
 }
 <ITALIC_TEXT>{
-			[^_\n]* fprintf(yyout, "\\textit{%s", yytext);
-			"_"	fprintf(yyout, "}"); BEGIN(BOLD_TEXT_NESTED_ITALIC); from_italic_text = 1; /* Llegado al último _, cerramos }, volvemos al stado BOLD_TEXT y ponemos from_italic_text a 1 para saber que estuvimos aquí, y no cerra antes de tiempo el \textbf*/
+	[^_\n]* fprintf(yyout, "\\textit{%s", yytext);
+	"_"	fprintf(yyout, "}"); BEGIN(BOLD_TEXT_NESTED_ITALIC); from_italic_text = 1; /* Llegado al último _, cerramos }, volvemos al stado BOLD_TEXT y ponemos from_italic_text a 1 para saber que estuvimos aquí, y no cerra antes de tiempo el \textbf*/
 }
 
-{scem}		{	BEGIN(ITALIC_TEXT_NESTED_BOLD); /* Comienzo de un strong __....*/} 
+{scem}	{	BEGIN(ITALIC_TEXT_NESTED_BOLD); /* Comienzo de un strong __....*/} 
 <ITALIC_TEXT_NESTED_BOLD>{
-			"_"	fprintf(yyout, "}"); // Eat the end
-			"__"	BEGIN(BOLD_TEXT); 	// Hay otro elemento anidado, un italic, pasamos a procesarlo
-			[^_\n]*	{ 
-								if (from_bold_text) 
-									fprintf(yyout, "%s", yytext); // Texto a continuación del italic
-								else
-									fprintf(yyout, "\\textit{%s", yytext);
-							}
-			\n	BEGIN(INITIAL);
+	"_"	fprintf(yyout, "}"); // Eat the end
+	"__"	BEGIN(BOLD_TEXT); 	// Hay otro elemento anidado, un italic, pasamos a procesarlo
+	[^_\n]*	{ 
+		if (from_bold_text) 
+			fprintf(yyout, "%s", yytext); // Texto a continuación del italic
+		else
+			fprintf(yyout, "\\textit{%s", yytext);
+	}
+\n	BEGIN(INITIAL);
 }
 <BOLD_TEXT>{
-			[^_\n]* fprintf(yyout, "\\textbf{%s", yytext);
-			"__"	fprintf(yyout, "}"); BEGIN(ITALIC_TEXT_NESTED_BOLD); from_bold_text = 1; /* Llegado al último _, cerramos }, volvemos al stado BOLD_TEXT y ponemos from_italic_text a 1 para saber que estuvimos aquí, y no cerra antes de tiempo el \textbf*/
+	[^_\n]* fprintf(yyout, "\\textbf{%s", yytext);
+	"__"	fprintf(yyout, "}"); BEGIN(ITALIC_TEXT_NESTED_BOLD); from_bold_text = 1; /* Llegado al último _, cerramos }, volvemos al stado BOLD_TEXT y ponemos from_italic_text a 1 para saber que estuvimos aquí, y no cerra antes de tiempo el \textbf*/
 }
 
 .|\n			{ECHO;}
