@@ -9,7 +9,6 @@
 #include<string.h>
 
 char *trimCharacter(char *str, char *c);
-void trimMarkDown();
 
 int from_italic_text = 0; /* Para saber si venimos de una italic anidada en la bold*/
 int from_bold_text = 0;
@@ -96,11 +95,6 @@ code	`{word}`
 
 %%   
 				/*----- Sección de Procedimientos --------*/ 
-
-void trimMarkDown(int len){
-	yytext[strlen(yytext)-len]='\0'; // exclude last len characters
-	yytext+=len; // exclude first len characters
-}
 
 /**
  * Thanks to http://stackoverflow.com/a/122721/1612432
