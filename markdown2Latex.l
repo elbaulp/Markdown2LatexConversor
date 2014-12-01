@@ -17,7 +17,7 @@ int from_bold_text = 0;
 %}
 
 /* Primitives */ 
-word					.+
+word	.+
 
 scstrong	"__"|"**"
 scem	"_"|"*"
@@ -60,7 +60,7 @@ code	`{word}`
 
 {scstrong}	{	BEGIN(BOLD_TEXT_NESTED_ITALIC); /* Comienzo de un strong __....*/} 
 <BOLD_TEXT_NESTED_ITALIC>{
-	"__"	fprintf(yyout, "}"); // Eat the end
+	"__"	fprintf(yyout, "}");BEGIN(INITIAL); // Eat the end and exit
 	"_"	BEGIN(ITALIC_TEXT); 	// Hay otro elemento anidado, un italic, pasamos a procesarlo
 	[^_\n]*	{	
 		if (from_italic_text)
@@ -77,7 +77,7 @@ code	`{word}`
 
 {scem}	{	BEGIN(ITALIC_TEXT_NESTED_BOLD); /* Comienzo de un strong __....*/} 
 <ITALIC_TEXT_NESTED_BOLD>{
-	"_"	fprintf(yyout, "}"); // Eat the end
+	"_"	fprintf(yyout, "}"); BEGIN(INITIAL); // Eat the end and exit
 	"__"	BEGIN(BOLD_TEXT); 	// Hay otro elemento anidado, un italic, pasamos a procesarlo
 	[^_\n]*	{ 
 		if (from_bold_text) 
