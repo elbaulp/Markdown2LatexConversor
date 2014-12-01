@@ -13,7 +13,7 @@ void trimMarkDown();
 
 int from_italic_text = 0; /* Para saber si venimos de una italic anidada en la bold*/
 int from_bold_text = 0;
-
+int first_run = 1;
 %}
 
 /* Primitives */ 
@@ -130,6 +130,29 @@ char *trimCharacter(char *str, char *c)
   return str;
 }
 
+int yywrap(){
+	if (first_run == 1){
+		first_run++;
+
+		fclose(yyout);
+		fclose(yyin);
+		yyin = fopen ("/tmp/out", "rt");
+		yyout = fopen("salida", "wt");
+
+		if (yyin == NULL) {
+			printf ("El fichero no se puede abrir\n");
+			exit (-1);
+		}
+		if (yyout == NULL) {
+			printf ("El fichero no se puede abrir\n");
+			exit (-1);
+		}
+		return 0;
+	} else {
+		return 1;
+	}
+}
+
 int main (int argc, char *argv[]) {
 	if (argc == 2) {
 		yyin = fopen (argv[1], "rt");
@@ -140,7 +163,7 @@ int main (int argc, char *argv[]) {
 	} else 
 		yyin = stdin;
 
-	yyout = fopen("salida", "wt");
+	yyout = fopen("/tmp/out", "wt");
 
 	if (yyout == NULL) {
 		printf ("El fichero %s no se puede abrir\n", argv[1]);
