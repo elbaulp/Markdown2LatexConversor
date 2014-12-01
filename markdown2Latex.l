@@ -174,34 +174,3 @@ int main (int argc, char *argv[]) {
 	
 	return 0;
 }
-
-//<INITIAL>{
-	//^\n						BEGIN(IN_MARKDOWN_LIST);fprintf(yyout, "\n\\begin{itemize}\n");
-//}
-
-//<IN_MARKDOWN_LIST>{
-	//^\n						fprintf(yyout, "\\end{itemize}\n\n");BEGIN(INITIAL); /* si volvemos a detectar línea vacia, hemos acabado el itemize, o no era nada y salimos */
-	//^"* "																													 /* Eliminar la sintáxis de itemize en markdown */
-	//[^"*"\n]+			fprintf(yyout, "\t\\item{%s}\n", yytext); 			 /* Éste es el texto que compone cada línea del itemize */
-	//\n						yylineno++;																			 /* Si detectamos salto de línea, aumentar el número de línea, y seguimos comprobando dentro de IN_MARKDOWN_LIST buscando más items*/
-//}
-
-//<INITIAL>{
-					//^\n				BEGIN(IN_MARKDOWN_LIST);
-				//}
-//<IN_MARKDOWN_LIST>{
-					//^\n						BEGIN(INITIAL);
-					//^"* "
-					//[^"*"]+				fprintf(yyout, "\\item{%s}", yytext); // eat comment in chunks
-					//\n						yylineno++;
-//}
-
-//<INITIAL>{
-					//"/*"			BEGIN(IN_COMMENT);
-				//}
-//<IN_COMMENT>{
-					//"*/"			BEGIN(INITIAL);
-					//[^*\n]+   fprintf(yyout,"\\item{%s}\n", yytext); // eat comment in chunks
-					//"*"       // eat the lone star
-					//\n				yylineno++;
-//}
