@@ -45,7 +45,7 @@ multilineCode	```|~~~
 <IN_MARKDOWN_LIST>{
 	^\n	fprintf(yyout, "\\end{itemize}\n\n");BEGIN(INITIAL); /* si volvemos a detectar línea vacia, hemos acabado el itemize, o no era nada y salimos */
 	^"* "|"- "	/* Eliminar la sintáxis de itemize en markdown */
-	[^"*"\-\n]+	fprintf(yyout, "\t\\item{%s}\n", yytext);	/* Éste es el texto que compone cada línea del itemize */
+	[^"*"\-\n]+	fprintf(yyout, "\t\\item {%s}\n", yytext);	/* Éste es el texto que compone cada línea del itemize */
 	\n	yylineno++;BEGIN(IN_MARKDOWN_LIST);	/* Si detectamos salto de línea, aumentar el número de línea, y seguimos comprobando dentro de IN_MARKDOWN_LIST buscando más items*/
 }
 
@@ -107,16 +107,16 @@ char *linkUrl = NULL;
 <IN_MARKDOWN_LINK>{ // Once here, we get rid of 
 	"["		// the open [
 	[^\]]*	{	// Here we match the link text, and store it
-		linkText = (char*) ec_malloc(yyleng);
-		strncpy(linkText, yytext, yyleng);
+		linkText = (char*) ec_malloc(yyleng+1);
+		strcpy(linkText, yytext);
 		BEGIN(CLOSE_BRACKET); // Move to the closing ]
 	}
 }
 <CLOSE_BRACKET>{
 	"]"|"("|")"	// Ignore this chars.
-	[^("]*	{	// Here we store the link url
-		linkUrl = (char*) ec_malloc(yyleng);
-		strncpy(linkUrl, yytext, yyleng);
+	[^(")]*	{	// Here we store the link url
+		linkUrl = (char*) ec_malloc(yyleng+1);
+		strcpy(linkUrl, yytext);
 		BEGIN(OPTIONAL_TEXT);
 	}
 }
