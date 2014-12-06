@@ -72,7 +72,7 @@ multilineCode	```|~~~
 		else
 			fprintf(yyout, "\\textbf{%s", yytext);
 	}
-	\n	BEGIN(INITIAL);
+	\n	unput( '*' ); BEGIN(INITIAL);
 }
 <ITALIC_TEXT>{
 	[^_\n]* fprintf(yyout, "\\textit{%s", yytext);
