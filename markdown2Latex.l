@@ -9,6 +9,8 @@
 #include<string.h>
 
 char *trimCharacter(char *str, char *c);
+void fatal(char *message);
+void *ec_malloc(unsigned int size);
 
 int from_italic_text = 0; /* Para saber si venimos de una italic anidada en la bold*/
 int from_bold_text = 0;
@@ -23,12 +25,15 @@ scem	"_"|"*"
 strong	(_|"*"){2}[^ ]{word}[^ ]("*"|_){2}
 em	(_|"*"){1}[^ ]{word}[^ ]("*"|_){1}
 list	^"* "|"- "
+link	"["
 h1	^#{1}[ ]{1}{word}
 h2	^#{2}[ ]{1}{word}
 h3	^#{3,6}[ ]{1}{word}
-code	`{word}`
+inlinecode	`{word}`
+multilineCode	```|~~~
 
 %x IN_MARKDOWN_LIST
+%x IN_MARKDOWN_LINK OPTIONAL_TEXT CLOSE_BRACKET
 %x BOLD_TEXT_NESTED_ITALIC ITALIC_TEXT
 %x BOLD_TEXT ITALIC_TEXT_NESTED_BOLD
 
@@ -44,7 +49,7 @@ code	`{word}`
 	\n	yylineno++;BEGIN(IN_MARKDOWN_LIST);	/* Si detectamos salto de línea, aumentar el número de línea, y seguimos comprobando dentro de IN_MARKDOWN_LIST buscando más items*/
 }
 
-{code}	{
+{inlinecode}	{
 	fprintf(yyout, "\\begin{bashcode}\n%s\n\\end{bashcode}", trimCharacter(yytext, "`"));
 }
 {h1}	{
@@ -91,6 +96,40 @@ code	`{word}`
 	"__"	fprintf(yyout, "}"); BEGIN(ITALIC_TEXT_NESTED_BOLD); from_bold_text = 1; /* Llegado al último _, cerramos }, volvemos al stado BOLD_TEXT y ponemos from_italic_text a 1 para saber que estuvimos aquí, y no cerra antes de tiempo el \textbf*/
 }
 
+%{
+// Variables for holding the values of the matched string
+char *linkText = NULL;
+char *linkUrl = NULL;
+%}
+{link}	{	// We begin processing a markdown link if it starts with [
+	BEGIN(IN_MARKDOWN_LINK);
+}
+<IN_MARKDOWN_LINK>{ // Once here, we get rid of 
+	"["		// the open [
+	[^\]]*	{	// Here we match the link text, and store it
+		linkText = (char*) ec_malloc(yyleng);
+		strncpy(linkText, yytext, yyleng);
+		BEGIN(CLOSE_BRACKET); // Move to the closing ]
+	}
+}
+<CLOSE_BRACKET>{
+	"]"|"("|")"	// Ignore this chars.
+	[^("]*	{	// Here we store the link url
+		linkUrl = (char*) ec_malloc(yyleng);
+		strncpy(linkUrl, yytext, yyleng);
+		BEGIN(OPTIONAL_TEXT);
+	}
+}
+
+<OPTIONAL_TEXT>{
+	.*	{	// In latex, we have nothing to do with the tittle attribute of the link, so we ignore it.
+		fprintf(yyout, "\\href{%s}{%s}", linkUrl, linkText);
+		free(linkText);
+		free(linkUrl);
+		BEGIN(INITIAL); // Ignore optional text
+	}
+}
+
 .|\n			{ECHO;}
 
 %%   
@@ -122,6 +161,25 @@ char *trimCharacter(char *str, char *c)
   *(end+1) = 0;
 
   return str;
+}
+
+// An error checked malloc() wrapper function (From the book Hacking, the art of exploitation)
+void *ec_malloc(unsigned int size) {
+   void *ptr;
+   ptr = malloc(size);
+   if(ptr == NULL)
+      fatal("in ec_malloc() on memory allocation");
+   return ptr;
+}
+
+// A function to display an error message and then exit (From the book Hacking, the art of exploitation)
+void fatal(char *message) {
+   char error_message[100];
+
+   strcpy(error_message, "[!!] Fatal Error ");
+   strncat(error_message, message, 83);
+   perror(error_message);
+   exit(-1);
 }
 
 int yywrap(){
