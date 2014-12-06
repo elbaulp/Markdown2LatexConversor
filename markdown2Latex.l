@@ -62,7 +62,7 @@ multilineCode	```|~~~
 	fprintf(yyout, "\\subsubsection{%s}", trimCharacter(yytext, "#"));
 }
 
-{scstrong}	{	BEGIN(BOLD_TEXT_NESTED_ITALIC); /* Comienzo de un strong __....*/} 
+{scstrong}	{	from_italic_text=0; BEGIN(BOLD_TEXT_NESTED_ITALIC); /* Comienzo de un strong __....*/} 
 <BOLD_TEXT_NESTED_ITALIC>{
 	"__"	fprintf(yyout, "}");BEGIN(INITIAL); // Eat the end and exit
 	"_"	BEGIN(ITALIC_TEXT); 	// Hay otro elemento anidado, un italic, pasamos a procesarlo
@@ -72,18 +72,18 @@ multilineCode	```|~~~
 		else
 			fprintf(yyout, "\\textbf{%s", yytext);
 	}
-	\n	unput( '*' ); BEGIN(INITIAL);
+	\n	BEGIN(INITIAL);
 }
 <ITALIC_TEXT>{
 	[^_\n]* fprintf(yyout, "\\textit{%s", yytext);
 	"_"	fprintf(yyout, "}"); BEGIN(BOLD_TEXT_NESTED_ITALIC); from_italic_text = 1; /* Llegado al último _, cerramos }, volvemos al stado BOLD_TEXT y ponemos from_italic_text a 1 para saber que estuvimos aquí, y no cerra antes de tiempo el \textbf*/
 }
 
-{scem}	{	BEGIN(ITALIC_TEXT_NESTED_BOLD); /* Comienzo de un strong __....*/} 
+{scem}	{from_bold_text=0; BEGIN(ITALIC_TEXT_NESTED_BOLD); /* Comienzo de un strong __....*/} 
 <ITALIC_TEXT_NESTED_BOLD>{
-	"_"	fprintf(yyout, "}"); BEGIN(INITIAL); // Eat the end and exit
+	"_"|"*"	fprintf(yyout, "}"); BEGIN(INITIAL); // Eat the end and exit
 	"__"	BEGIN(BOLD_TEXT); 	// Hay otro elemento anidado, un italic, pasamos a procesarlo
-	[^_\n]*	{ 
+	[^_*\n]*	{ 
 		if (from_bold_text) 
 			fprintf(yyout, "%s", yytext); // Texto a continuación del italic
 		else
