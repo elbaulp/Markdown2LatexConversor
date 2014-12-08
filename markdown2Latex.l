@@ -18,18 +18,17 @@ int first_run = 1;
 %}
 
 /* Primitives */
-word	.+
+anyChar	.+
+word	[A-z0-9]+
 
-scstrong	"__"|"**"
-scem	"_"|"*"
-strong	(_|"*"){2}[^ ]{word}[^ ]("*"|_){2}
-em	(_|"*"){1}[^ ]{word}[^ ]("*"|_){1}
+scstrong	"__"
+scem	"_"
 list	^"* "|"- "
 link	"["
-h1	^#{1}[ ]{1}{word}
-h2	^#{2}[ ]{1}{word}
-h3	^#{3,6}[ ]{1}{word}
-inlinecode	`{word}`
+h1	^#{1}[ ]{1}{anyChar}
+h2	^#{2}[ ]{1}{anyChar}
+h3	^#{3,6}[ ]{1}{anyChar}
+inlinecode	`{anyChar}`
 multilineCode	```|~~~
 
 %x IN_MARKDOWN_LIST
@@ -81,9 +80,9 @@ multilineCode	```|~~~
 
 {scem}	{from_bold_text=0; BEGIN(ITALIC_TEXT_NESTED_BOLD); /* Comienzo de un strong __....*/}
 <ITALIC_TEXT_NESTED_BOLD>{
-	"_"|"*"	fprintf(yyout, "}"); BEGIN(INITIAL); // Eat the end and exit
+	"_"	fprintf(yyout, "}"); BEGIN(INITIAL); // Eat the end and exit
 	"__"	BEGIN(BOLD_TEXT); 	// Hay otro elemento anidado, un italic, pasamos a procesarlo
-	[^_*\n]*	{
+	[^_\n]*	{
 		if (from_bold_text)
 			fprintf(yyout, "%s", yytext); // Texto a continuación del italic
 		else
