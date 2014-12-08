@@ -132,7 +132,7 @@ char *linkUrl = NULL;
 }
 
 <OPTIONAL_TEXT>{
-	.*	{	// In latex, we have nothing to do with the tittle attribute of the link, so we ignore it.
+	\"[^\"]+\"")"	{	// In latex, we have nothing to do with the tittle attribute of the link, so we ignore it. Ignore things like "alt text")
 		fprintf(yyout, "\\href{%s}{%s}", linkUrl, linkText);
 		free(linkText);
 		free(linkUrl);
