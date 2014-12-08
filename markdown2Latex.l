@@ -28,13 +28,14 @@ link	"["
 h1	^#{1}[ ]{1}{anyChar}
 h2	^#{2}[ ]{1}{anyChar}
 h3	^#{3,6}[ ]{1}{anyChar}
-inlinecode	`{anyChar}`
-multilineCode	```|~~~
+multilineCode	^[`]{3}[^`]*
+inlinecode	`{1}{anyChar}`{1}
 
 %x IN_MARKDOWN_LIST
 %x IN_MARKDOWN_LINK OPTIONAL_TEXT CLOSE_BRACKET
 %x BOLD_TEXT_NESTED_ITALIC ITALIC_TEXT
 %x BOLD_TEXT ITALIC_TEXT_NESTED_BOLD
+%x IN_MULTILINE_CODE
 
 %%
 				 /*----- Sección de Reglas ----------------*/
@@ -48,9 +49,19 @@ multilineCode	```|~~~
 	\n	yylineno++;BEGIN(IN_MARKDOWN_LIST);	/* Si detectamos salto de línea, aumentar el número de línea, y seguimos comprobando dentro de IN_MARKDOWN_LIST buscando más items*/
 }
 
-{inlinecode}	{
-	fprintf(yyout, "\\begin{bashcode}\n%s\n\\end{bashcode}", trimCharacter(yytext, "`"));
+{multilineCode}	{
+	fprintf(yyout, "\\begin{bashcode}\n%s\n", trimCharacter(yytext, "`"));
+	BEGIN(IN_MULTILINE_CODE);
 }
+
+<IN_MULTILINE_CODE>{
+	`{3}|~{3}	fprintf(yyout, "\\end{bashcode}"); BEGIN(INITIAL); // End of code syntax
+}
+
+{inlinecode}	{
+	fprintf(yyout, "\\begin{bashcode}\n%s\n\\end{bashcode}", trimCharacter(yytext, "`")); // Maybe verbatim
+}
+
 {h1}	{
 	fprintf(yyout, "\\section{%s}", trimCharacter(yytext, "#"));
 }
