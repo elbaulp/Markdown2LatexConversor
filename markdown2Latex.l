@@ -17,7 +17,7 @@ int from_bold_text = 0;
 int first_run = 1;
 %}
 
-/* Primitives */ 
+/* Primitives */
 word	.+
 
 scstrong	"__"|"**"
