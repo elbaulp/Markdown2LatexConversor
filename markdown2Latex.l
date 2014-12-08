@@ -1,4 +1,4 @@
-				 /*----- Sección de Declaraciones --------------*/ 
+				 /*----- Sección de Declaraciones --------------*/
 
 %option case-insensitive
 %option debug
@@ -38,7 +38,7 @@ multilineCode	```|~~~
 %x BOLD_TEXT ITALIC_TEXT_NESTED_BOLD
 
 %%
-				 /*----- Sección de Reglas ----------------*/ 
+				 /*----- Sección de Reglas ----------------*/
 
 {list}	{BEGIN(IN_MARKDOWN_LIST);fprintf(yyout, "\\begin{itemize}\n");}
 
@@ -62,11 +62,11 @@ multilineCode	```|~~~
 	fprintf(yyout, "\\subsubsection{%s}", trimCharacter(yytext, "#"));
 }
 
-{scstrong}	{	from_italic_text=0; BEGIN(BOLD_TEXT_NESTED_ITALIC); /* Comienzo de un strong __....*/} 
+{scstrong}	{	from_italic_text=0; BEGIN(BOLD_TEXT_NESTED_ITALIC); /* Comienzo de un strong __....*/}
 <BOLD_TEXT_NESTED_ITALIC>{
 	"__"	fprintf(yyout, "}");BEGIN(INITIAL); // Eat the end and exit
 	"_"	BEGIN(ITALIC_TEXT); 	// Hay otro elemento anidado, un italic, pasamos a procesarlo
-	[^_\n]*	{	
+	[^_\n]*	{
 		if (from_italic_text)
 			fprintf(yyout, "%s", yytext); // Texto a continuación del italic
 		else
@@ -79,12 +79,12 @@ multilineCode	```|~~~
 	"_"	fprintf(yyout, "}"); BEGIN(BOLD_TEXT_NESTED_ITALIC); from_italic_text = 1; /* Llegado al último _, cerramos }, volvemos al stado BOLD_TEXT y ponemos from_italic_text a 1 para saber que estuvimos aquí, y no cerra antes de tiempo el \textbf*/
 }
 
-{scem}	{from_bold_text=0; BEGIN(ITALIC_TEXT_NESTED_BOLD); /* Comienzo de un strong __....*/} 
+{scem}	{from_bold_text=0; BEGIN(ITALIC_TEXT_NESTED_BOLD); /* Comienzo de un strong __....*/}
 <ITALIC_TEXT_NESTED_BOLD>{
 	"_"|"*"	fprintf(yyout, "}"); BEGIN(INITIAL); // Eat the end and exit
 	"__"	BEGIN(BOLD_TEXT); 	// Hay otro elemento anidado, un italic, pasamos a procesarlo
-	[^_*\n]*	{ 
-		if (from_bold_text) 
+	[^_*\n]*	{
+		if (from_bold_text)
 			fprintf(yyout, "%s", yytext); // Texto a continuación del italic
 		else
 			fprintf(yyout, "\\textit{%s", yytext);
@@ -104,7 +104,7 @@ char *linkUrl = NULL;
 {link}	{	// We begin processing a markdown link if it starts with [
 	BEGIN(IN_MARKDOWN_LINK);
 }
-<IN_MARKDOWN_LINK>{ // Once here, we get rid of 
+<IN_MARKDOWN_LINK>{ // Once here, we get rid of
 	"["		// the open [
 	[^\]]*	{	// Here we match the link text, and store it
 		linkText = (char*) ec_malloc(yyleng+1);
@@ -132,8 +132,8 @@ char *linkUrl = NULL;
 
 .|\n			{ECHO;}
 
-%%   
-				/*----- Sección de Procedimientos --------*/ 
+%%
+				/*----- Sección de Procedimientos --------*/
 
 /**
  * Thanks to http://stackoverflow.com/a/122721/1612432
@@ -147,13 +147,13 @@ char *trimCharacter(char *str, char *c)
 	while(strncmp(str, c, 1) == 0){
 		str++;
 	}
-	
+
   if(*str == 0)  // All spaces?
     return str;
 
   // Trim trailing character
 	end = str + strlen(str) - 1;
-	while(end > str && (strncmp(end, c, 1) == 0)){ 
+	while(end > str && (strncmp(end, c, 1) == 0)){
 		end--;
 	}
 
@@ -212,7 +212,7 @@ int main (int argc, char *argv[]) {
 			printf ("El fichero %s no se puede abrir\n", argv[1]);
 			exit (-1);
 		}
-	} else 
+	} else
 		yyin = stdin;
 
 	yyout = fopen("/tmp/out", "wt");
@@ -223,6 +223,6 @@ int main (int argc, char *argv[]) {
 	}
 
 	yylex ();
-	
+
 	return 0;
 }
