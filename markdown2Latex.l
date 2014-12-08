@@ -29,7 +29,7 @@ h1	^#{1}[ ]{1}{anyChar}
 h2	^#{2}[ ]{1}{anyChar}
 h3	^#{3,6}[ ]{1}{anyChar}
 multilineCode	^[`]{3}[^`]*
-inlinecode	`{1}{anyChar}`{1}
+inlinecode	`{1}[^`]*`{1}
 
 %x IN_MARKDOWN_LIST
 %x IN_MARKDOWN_LINK OPTIONAL_TEXT CLOSE_BRACKET
