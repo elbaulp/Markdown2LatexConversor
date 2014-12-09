@@ -23,7 +23,8 @@ word	[A-z0-9]+
 
 scstrong	"__"
 scem	"_"
-list	^"* "|"- "
+list	^"* "
+list2	^"- "
 link	"["
 h1	^#{1}[ ]{1}{anyChar}
 h2	^#{2}[ ]{1}{anyChar}
@@ -32,7 +33,7 @@ multilineCode	^[`]{3}[^`]*
 inlinecode	`{1}[^`]*`{1}
 ignoreParsedCode	"\\begin{bashcode}"
 
-%x IN_MARKDOWN_LIST
+%x IN_MARKDOWN_LIST IN_MARKDOWN_LIST2
 %x IN_MARKDOWN_LINK OPTIONAL_TEXT CLOSE_BRACKET
 %x BOLD_TEXT_NESTED_ITALIC ITALIC_TEXT
 %x BOLD_TEXT ITALIC_TEXT_NESTED_BOLD
@@ -43,12 +44,20 @@ ignoreParsedCode	"\\begin{bashcode}"
 				 /*----- Sección de Reglas ----------------*/
 
 {list}	{BEGIN(IN_MARKDOWN_LIST);fprintf(yyout, "\\begin{itemize}\n");}
+{list2}	{BEGIN(IN_MARKDOWN_LIST2);fprintf(yyout, "\\begin{itemize}\n");}
 
 <IN_MARKDOWN_LIST>{
 	^\n	fprintf(yyout, "\\end{itemize}\n\n");BEGIN(INITIAL); /* si volvemos a detectar línea vacia, hemos acabado el itemize, o no era nada y salimos */
-	^"* "|"- "	/* Eliminar la sintáxis de itemize en markdown */
-	[^"*"\-\n]+	fprintf(yyout, "\t\\item {%s}\n", yytext);	/* Éste es el texto que compone cada línea del itemize */
+	^"* "	/* Eliminar la sintáxis de itemize en markdown */
+	[^"*"\n]+	fprintf(yyout, "\t\\item {%s}\n", yytext);	/* Éste es el texto que compone cada línea del itemize */
 	\n	yylineno++;BEGIN(IN_MARKDOWN_LIST);	/* Si detectamos salto de línea, aumentar el número de línea, y seguimos comprobando dentro de IN_MARKDOWN_LIST buscando más items*/
+}
+
+<IN_MARKDOWN_LIST2>{
+	^\n	fprintf(yyout, "\\end{itemize}\n\n");BEGIN(INITIAL); /* si volvemos a detectar línea vacia, hemos acabado el itemize, o no era nada y salimos */
+	^"- "	/* Eliminar la sintáxis de itemize en markdown */
+	[^\-\n]+	fprintf(yyout, "\t\\item {%s}\n", yytext);	/* Éste es el texto que compone cada línea del itemize */
+	\n	yylineno++;BEGIN(IN_MARKDOWN_LIST2);	/* Si detectamos salto de línea, aumentar el número de línea, y seguimos comprobando dentro de IN_MARKDOWN_LIST buscando más items*/
 }
 
 {multilineCode}	{
