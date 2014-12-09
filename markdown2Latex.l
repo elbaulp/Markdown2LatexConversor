@@ -159,7 +159,7 @@ char *linkUrl = NULL;
 {ignoreParsedCode}	{ECHO; BEGIN(PARSED_CODE);}
 <PARSED_CODE>{
 	"\\end{bashcode}"	ECHO; BEGIN(INITIAL);
-	[\n ]*.*	ECHO;
+	.*	ECHO;
 }
 
 .|\n			{ECHO;}
