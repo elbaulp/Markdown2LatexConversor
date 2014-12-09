@@ -30,12 +30,14 @@ h2	^#{2}[ ]{1}{anyChar}
 h3	^#{3,6}[ ]{1}{anyChar}
 multilineCode	^[`]{3}[^`]*
 inlinecode	`{1}[^`]*`{1}
+ignoreParsedCode	"\\begin{bashcode}"
 
 %x IN_MARKDOWN_LIST
 %x IN_MARKDOWN_LINK OPTIONAL_TEXT CLOSE_BRACKET
 %x BOLD_TEXT_NESTED_ITALIC ITALIC_TEXT
 %x BOLD_TEXT ITALIC_TEXT_NESTED_BOLD
 %x IN_MULTILINE_CODE
+%x PARSED_CODE
 
 %%
 				 /*----- Sección de Reglas ----------------*/
@@ -138,6 +140,16 @@ char *linkUrl = NULL;
 		free(linkUrl);
 		BEGIN(INITIAL); // Ignore optional text
 	}
+}
+
+%{
+	// Ignore anything that can be matched in a block of text that is supposed to
+	// be like it was originaly written, similar to a pre HTML tag.
+%}
+{ignoreParsedCode}	{ECHO; BEGIN(PARSED_CODE);}
+<PARSED_CODE>{
+	"\\end{bashcode}"	ECHO; BEGIN(INITIAL);
+	[\n ]*.*	ECHO;
 }
 
 .|\n			{ECHO;}
