@@ -61,7 +61,7 @@ ignoreParsedCode	"\\begin{bashcode}"
 }
 
 {inlinecode}	{
-	fprintf(yyout, "\\begin{bashcode}\n%s\n\\end{bashcode}", trimCharacter(yytext, "`")); // Maybe verbatim
+	fprintf(yyout, "\\bashinline/%s/", trimCharacter(yytext, "`")); // Maybe verbatim
 }
 
 {h1}	{
