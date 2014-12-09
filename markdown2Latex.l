@@ -221,6 +221,7 @@ int yywrap(){
 			printf ("El fichero no se puede abrir\n");
 			exit (-1);
 		}
+		BEGIN(INITIAL);
 		return 0;
 	} else {
 		return 1;
